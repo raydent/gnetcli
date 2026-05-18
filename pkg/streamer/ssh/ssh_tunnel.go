@@ -175,6 +175,7 @@ func (m *SSHTunnel) StartForward(remoteAddr string) (net.Conn, error) {
 
 	go func() {
 		err := wg.Wait()
+		_ = lconn.Close()
 		m.logger.Debug("tunnel done", zap.String("remote", remoteAddr), zap.Error(err))
 	}()
 

@@ -1221,15 +1221,13 @@ func DialCtx(ctx context.Context, host string, port int, addresses []net.IP, con
 }
 
 func DialConnCtx(ctx context.Context, conn net.Conn, addr string, config *ssh.ClientConfig) (*ssh.Client, error) {
-	lctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
+	done := make(chan struct{})
+	defer close(done)
 	go func() {
-		<-lctx.Done()
-		if err := lctx.Err(); err != nil {
-			if err != context.Canceled {
-				conn.Close()
-			}
+		select {
+		case <-ctx.Done():
+			_ = conn.Close()
+		case <-done:
 		}
 	}()
 	c, chans, reqs, err := ssh.NewClientConn(conn, addr, config)
